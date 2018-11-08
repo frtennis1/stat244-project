@@ -6,6 +6,7 @@
 
 \usepackage{hyperref}
 \usepackage{natbib}
+\usepackage{nopageno}
 
 \begin{document}
 
@@ -15,8 +16,14 @@
 
 \maketitle
 
-Proposal goes here. Add a citation \citet{o1986automatic}.
+We are interested in studying the statistical and computational techniques in
+GLMs with high-dimensional data. We build upon the well-known lasso method for
+OLS, understanding the adaptations relevant to GLMS, their computational
+complexities, and their asymptotic guarantees. To this end, we compiled a list
+of references which we find interesting.
 
+
+\nocite{*}
 \bibliography{sources}
 \bibliographystyle{apalike}
 
