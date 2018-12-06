@@ -1,0 +1,49 @@
+\documentclass[12pt]{article}
+\usepackage{macros}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\chead{\textsc{High-dimensional GLMs}}
+\lhead{}
+\rhead{}
+\begin{document}
+\section{\cite{o1986automatic}} 
+The goal is to use $\eta_i = f(t_i)$ with a nonparametric $f$ instead of the
+usual $\eta_i = x_i^T\beta$, which gives the researcher tools for visualizing
+data from complex distributions. We fit via penalized (regularized) likelihood
+\[
+\ell_{n\lambda}(f) = \sum_i \ell_i(y_i \mid f(t_i)) + n\lambda J(f). 
+\]
+for some penalty functional $J$. The paper uses a Laplacian penalty \[ J_m(f) =
+\int \sum_{i_1, \ldots, i_m = 1}^d \bk{\diff{^m f}{x_{i_1} \cdots \partial
+x_{i_m}}}^2 \,dx
+\]
+which integrates over the $L^2$-norm of all $m$-th partial derivatives of $f$.
+Let $S$ be the space of functions we search over, which is all functions with
+$L^2$-integrable $m$-th derivatives. The paper shows that the analytical
+minimizer of $\ell_{n\lambda}$ lies in a finite-dimensional subspace of $S$ and
+are polynomials. They are well-approximated by tensor product $B$-splines. This
+result motivates representing $f$ as a basis composition $f = \sum_r \beta_r
+h_r$, which motivates taking a basis transform of the data $x_{ir} = h_r(t_i)$
+and proceed with GLM.
+
+\section{\cite{van2008high}}
+
+Consider a linear space of functions over the input space $\mathcal X$ \[
+\mathcal F  = \br{f_\theta(\cdot) = \sum_k \theta_k \psi_k(\cdot): \theta \in \Theta}.
+\]
+Let $\gamma_f : \mathcal X \times \mathcal Y \to \R$ be some loss function, consider the weighted lasso penalty estimator \[
+\hat \theta_n = \argmin_{\theta\in \Theta} \br{
+    \frac{1}{n} \sum_{i=1}^n \gamma_{f_\theta}(X_i, Y_i) + \lambda_n \sum_{k=1}^m \hat \sigma_k |\theta_k|
+},\quad \hat \sigma_k = \pr{\frac{1}{n} \sum_{i=1}^n \psi_k^2 (X_i)}^{1/2}.
+\]
+The population minimizing target is \[
+\bar f = \argmin_{f\in \mathcal \mathbf{F} \supset \mathcal F} \E_{(X,Y)}[\gamma_f],
+\]
+over the joint distribution $X,Y$. Let $\mathcal E(f) = \E[\gamma_f] - \E[\gamma_{\bar f}] \ge 0$. Our target is to show that, with large probability \[
+\mathcal E(f_{\hat \theta_n}) \le \text{const.} \times \min_{\theta\in\Theta} \br{
+    \mathcal E(f_\theta) + \mathcal V_\theta
+}
+\]
+\bibliographystyle{jpe}
+\bibliography{../proposal/sources.bib}
+\end{document}
