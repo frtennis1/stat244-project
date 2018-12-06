@@ -1,6 +1,5 @@
-%        File: proposal.tex
-%     Created: Wed Nov 07 07:00 PM 2018 E
-% Last Change: Wed Nov 07 07:00 PM 2018 E
+%        File: proposal.tex Created: Wed Nov 07 07:00 PM 2018 E Last Change: Wed
+%     Nov 07 07:00 PM 2018 E
 %
 \documentclass[letterpaper, 12pt]{article}
 \usepackage{bbm}
@@ -33,7 +32,12 @@
 
 \maketitle
 
-The workhorse for high-dimensional regressions is the $\ell_1$ lasso penalty \citep{tibshirani1996regression}. The original lasso is developed for fitting (normal) linear models with the objective\footnote{We always assume that $y,x$ are demeaned so the intercept term is zero, as the intercept term is not regularized otherwise.} \begin{equation}
+\section{Introduction}
+The workhorse for high-dimensional regressions is the $\ell_1$ lasso penalty
+\citep{tibshirani1996regression}. The original lasso is developed for fitting
+(normal) linear models with the objective\footnote{We always assume that $y,x$
+are demeaned so the intercept term is zero, as the intercept term is not
+regularized otherwise.} \begin{equation}
     \hat \bbeta_{\text{lasso}} = \argmin_{\bbeta}\, \norm{\by - \bx\bbeta}^2 + \lambda \norm{\bbeta}_1, \, \lambda > 0.
     \label{eq:linear_lasso}
 \end{equation}
@@ -46,7 +50,23 @@ where $g(\E[y]) = \eta = \bx^\trans \bbeta$ for some scalar function $g$. Thus w
 \end{equation}
 where \eqref{eq:glm_lasso} reduces to \eqref{eq:linear_lasso} if the likelihood is Gaussian and $g$ is the canonical link for the Gaussian model, which is the identity function. Note that the objective \eqref{eq:glm_lasso} is convex if we use the canonical link, since the exponential family log-likelihood is concave in $\theta$, and $\theta = \bx^\trans \bbeta$ is linear in $\bbeta$ for the canonical link.
 
-\cite{efron2004least} gives an efficient estimation procedure for the linear lasso \eqref{eq:linear_lasso} called the Least Angle Regression (LAR), which relies on the fact that the \emph{regularization path}---$\hat \bbeta_i$ as a function of $\lambda$---is piecewise linear in \eqref{eq:linear_lasso}. Such a structure is often unavailable in applications like \eqref{eq:glm_lasso}. The most popular method---proposed by \cite{friedman2010regularization} and implemented in \textsf{R}'s \textsf{glmnet} package---is \emph{cyclical coordinate descent} with iteratively reweighted least squares. The idea is to approximate $\ell_n(\bbeta)$ in \eqref{eq:glm_lasso} with a second-order Taylor expansion, either globally for all parameters $\bbeta$ (for scalar-valued GLMs) or locally with a single parameter $\bbeta_j$ (for vector-valued GLMs, such as the multinomial logistic regression). Such an approximation yields a quadratic function (in the scalar GLM case) \[
+\section{Model Selection with Lasso}
+
+
+\section{Estimation}
+\cite{efron2004least} gives an efficient estimation procedure for the linear
+lasso \eqref{eq:linear_lasso} called the Least Angle Regression (LAR), which
+relies on the fact that the \emph{regularization path}---$\hat \bbeta_i$ as a
+function of $\lambda$---is piecewise linear in \eqref{eq:linear_lasso}. Such a
+structure is often unavailable in applications like \eqref{eq:glm_lasso}. The
+most popular method---proposed by \cite{friedman2010regularization} and
+implemented in \textsf{R}'s \textsf{glmnet} package---is \emph{cyclical
+coordinate descent} with iteratively reweighted least squares. The idea is to
+approximate $\ell_n(\bbeta)$ in \eqref{eq:glm_lasso} with a second-order Taylor
+expansion, either globally for all parameters $\bbeta$ (for scalar-valued GLMs)
+or locally with a single parameter $\bbeta_j$ (for vector-valued GLMs, such as
+the multinomial logistic regression). Such an approximation yields a quadratic
+function (in the scalar GLM case) \[
 \ell_{Q}(\bbeta) = \frac{1}{n}\sum_{i=1}^n w_{i} (y_i - \bx_i^\trans \bbeta)^2.
 \]
 We then solve a local penalized least-squares problem:\begin{equation}
@@ -103,7 +123,15 @@ Let $Q(\bbeta)$ be the objective in \eqref{eq:glm_lasso}.
     The runtime to achieve $\epsilon$ expected accuracy is bounded by \[O\pr{\frac{np\kappa }{\epsilon} \norm{\hat \bbeta_{\text{GLM-lasso}}}_2^2}.\]
 \end{cor}
 
-Moreover, \cite{bradley2011parallel} show that a parallel version of the coordinate gradient descent procedure above where at each iteration, $\mathsf P$ (possibly duplicate) coordinates are updated in parallel. For correlated features, such parallelism is dangerous, since updating two correlated features simulataneously may over or undercompensate for the gradient direction.  \cite{bradley2011parallel} quantifies the interference due to correlated features and shows that efficiency increases linearly in the number of parallel processes $\mathsf{P}$ so long as $\mathsf{P} \le \frac{p}{\rho}$ where $\rho$ is the largest modulus of the eigenvalues of $X^\trans X$. 
+Moreover, \cite{bradley2011parallel} show that a parallel version of the
+coordinate gradient descent procedure above where at each iteration, $\mathsf P$
+(possibly duplicate) coordinates are updated in parallel. For correlated
+features, such parallelism is dangerous, since updating two correlated features
+simulataneously may over or undercompensate for the gradient direction.
+\cite{bradley2011parallel} quantifies the interference due to correlated
+features and shows that efficiency increases linearly in the number of parallel
+processes $\mathsf{P}$ so long as $\mathsf{P} \le \frac{p}{\rho}$ where $\rho$
+is the largest modulus of the eigenvalues of $X^\trans X$.
 
 Coordinate descent methods described above can also become expensive if $n$ is
 large. The standard machine learning and optimization answer to this problem is
@@ -112,14 +140,21 @@ to use \emph{stochastic gradient descent}, replacing $\nabla_{\bbeta}
 \bbeta)$, which is the gradient evaluated on a single observation.\footnote{We
 can replace this with \emph{batched gradient descent} as well, where the
 gradient estimate is averaging over a batch of observations.}
-\cite{shalev2011stochastic} consider a mirror descent algorithm in the lasso context, by running stochastic gradient descent on the dual problem and enforcing sparsity in an intelligent manner. Let $\bgamma = f(\bbeta)$ be the dual parameter for $\bbeta$ with an invertible link $f$. We choose an observation $i$ at random, compute $\bg_i$, and update \begin{align*}
+\cite{shalev2011stochastic} consider a mirror descent algorithm in the lasso
+context, by running stochastic gradient descent on the dual problem and
+enforcing sparsity in an intelligent manner. Let $\bgamma = f(\bbeta)$ be the
+dual parameter for $\bbeta$ with an invertible link $f$. We choose an
+observation $i$ at random, compute $\bg_i$, and update \begin{align*}
 \bgamma &\gets \bgamma - \eta \bg_i \\
 \bgamma' &\gets \bgamma - \eta\lambda \sgn(\bgamma) \tag{Decrease $\norm{\bbeta}_1$}\\
 \bgamma_j &\gets \bgamma'_j \one\pr{\sgn(\bgamma_j) = \sgn(\bgamma'_j)} \tag{Maintains sparsity} \\
 \bbeta &\gets f^{-1}(\bgamma).
 \end{align*}
-The runtime bound for the stochastic mirror descent algorithm in \cite{shalev2011stochastic} is \[O\pr{\frac{p\log p}{\epsilon^2} \norm{\hat \bbeta_{\text{GLM-lasso}}}_2^2}.\]
-We pay the price of the $p\log p$ and $\epsilon^{-2}$ dependence, as opposed to $p$ and $\epsilon^{-1}$, in order to achieve the benefit of a $n$-free runtime.  
+The runtime bound for the stochastic mirror descent algorithm in
+\cite{shalev2011stochastic} is \[O\pr{\frac{p\log p}{\epsilon^2} \norm{\hat
+\bbeta_{\text{GLM-lasso}}}_2^2}.\] We pay the price of the $p\log p$ and
+$\epsilon^{-2}$ dependence, as opposed to $p$ and $\epsilon^{-1}$, in order to
+achieve the benefit of a $n$-free runtime.
 
 
 \newpage
