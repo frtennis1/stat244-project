@@ -5,4 +5,10 @@
 *bbl
 *blg
 *out
-
+*gitignore
+*fls
+*.pdf
+*fdb_latexmk
+*fls
+lit/*
+.DS_Store
