@@ -52,8 +52,40 @@ where \eqref{eq:glm_lasso} reduces to \eqref{eq:linear_lasso} if the likelihood 
 
 \section{Model Selection with Lasso}
 
+Brute-force model selection scales poorly with respect to the number of
+predictors, yet it's most important precisely when we have a large number of
+predictors. That is, when building a model to predict $\bm{y}$ from a subset of
+the columns of $\bm{x} \in \mathbb{R}^{n,p}$ (since not all columns may be
+predictive), there are $2^p$ subsets of columns to regress on. Checking all of
+these models against each other incurs a cost exponential in $p$ and becomes
+prohibitively expensive in a high-dimensional setting.
+
+In class, we tackled this problem with forward-selection and backward-deletion,
+a greedy algorithm that adds and removes covariates until a local optimal is
+reached. \cite{park2007l1}'s use of the lasso for GLMs provides a competitive
+alternative that behaves less greedily. We describe their procedure in this
+section.
+
+In order to employ this method, we require a method to solve
+\eqref{eq:glm_lasso}. For now, we suppose that we have such a method and can use
+it as a black box. It is sufficient for us to know that this black box takes in
+an initial $\bbeta^\text{init}$ and employs a descent-based method to converge
+toward the optimal $\bbeta^*$. \cref{sec:estimation} follows-up by describing
+the inner workings of different approaches.
+
+The lasso penalty induces a sparsity in our optimal $\bbeta$. This sparsity
+increases as our penalization term $\lambda$ becomes bigger. Indeed, if we take
+$\lambda \to \infty$, then our solution is driven to $\bbeta \to \bm{0}$ because
+the penalization term is all that matters, and the norm of $\bbeta$ is minimized
+at $\bm{0}$. The entire domain when $\bbeta = \bm{0}$ is uninteresting, so we
+initialize our algorithm at $\lambda_\text{max}$ which we define as the smallest
+$\lambda$ such that there is only one non-zero coefficient.
+
+
 
 \section{Estimation}
+\label{sec:estimation}
+
 \cite{efron2004least} gives an efficient estimation procedure for the linear
 lasso \eqref{eq:linear_lasso} called the Least Angle Regression (LAR), which
 relies on the fact that the \emph{regularization path}---$\hat \bbeta_i$ as a
@@ -91,7 +123,7 @@ We summarize the procedure described above in \Cref{alg:ccd}.
 \begin{algorithmic}
 \State{Initialize $\bbeta$}
 \For{$\lambda$ on regularization path}
-\While{$\bbeta$ has not coverged}
+\While{$\bbeta$ has not converged}
 \State{Approximate $\ell_n(\beta)$ by $\ell_Q(\beta)$}
 \While{cyclical descent has not converged}
 \For{$j$}
