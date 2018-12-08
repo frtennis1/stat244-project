@@ -35,17 +35,15 @@
 \section{Introduction}
 The workhorse for high-dimensional regressions is the $\ell_1$ lasso penalty
 \citep{tibshirani1996regression}. The original lasso is developed for fitting
-(normal) linear models with the objective\footnote{We consider $\by$ an $n$-vector of response variables whose $i$th element is $\by_i$. We consider the covariate matrix $\bX$ ($n \times p$). 
-We always assume that $\by,\bX$
-are demeaned so the intercept term is zero, as the intercept term is usually not regularized.} \begin{equation}
-    \hat \bbeta_{\text{lasso}} = \argmin_{\bbeta}\, \norm{\by - \bX\bbeta}^2 + \lambda \norm{\bbeta}_1, \, \lambda > 0.
+(normal) linear models with the objective\footnote{We consider $\by$ an $n$-vector of response variables whose $i$th element is $\by_i$. We consider the covariate matrix $\bX$ ($n \times p$). In most settings, $\bX$ include an intercept column, $\bx_{0} = \bm 1$, that is not regularized.} \begin{equation}
+    \hat \bbeta_{\text{lasso}} = \argmin_{\bbeta}\, \norm{\by - \bX\bbeta}^2 + \lambda \norm{\bbeta}_1 - \lambda |\beta_0|, \, \lambda > 0.
     \label{eq:linear_lasso}
 \end{equation}
 The first paper about lasso in a GLM setting is \cite{park2007l1}: Consider a scalar GLM with likelihood \[
 L(y; \theta,\phi) = \exp\br{\frac{y\theta - b(\theta)}{a(\phi)} + c(y, \phi)},
 \]
 where $g(\E[y]) = \eta = \bx^\trans \bbeta$ for some scalar function $g$. Thus we may consider a direct extension of \eqref{eq:linear_lasso}: \begin{equation}
-    \hat \bbeta_{\text{GLM-lasso}} = \argmin_{\bbeta}\, \underbrace{-\frac{1}{n}\sum_{i=1}^n \bk{y_i \theta(\bbeta)_i - b\pr{\theta(\bbeta)_i}}}_{\ell_n(\bbeta)} + \lambda \norm{\bbeta}_1,
+    \hat \bbeta_{\text{GLM-lasso}} = \argmin_{\bbeta}\, \underbrace{-\frac{1}{n}\sum_{i=1}^n \bk{y_i \theta(\bbeta)_i - b\pr{\theta(\bbeta)_i}}}_{\ell_n(\bbeta)} + \lambda \norm{\bbeta}_1 - \lambda |\beta_0|,
     \label{eq:glm_lasso}
 \end{equation}
 where \eqref{eq:glm_lasso} reduces to \eqref{eq:linear_lasso} if the likelihood is Gaussian and $g$ is the canonical link for the Gaussian model, which is the identity function. Note that the objective \eqref{eq:glm_lasso} is convex if we use the canonical link, since the exponential family log-likelihood is concave in $\theta$, and $\theta = \bx^\trans \bbeta$ is linear in $\bbeta$ for the canonical link.
@@ -53,12 +51,12 @@ where \eqref{eq:glm_lasso} reduces to \eqref{eq:linear_lasso} if the likelihood 
 \section{Model Selection with Lasso}
 
 Brute-force model selection scales poorly with respect to the number of
-predictors, yet it's most important precisely when we have a large number of
-predictors. That is, when building a model to predict $\bm{y}$ from a subset of
-the columns of $\bm{x} \in \mathbb{R}^{n,p}$ (since not all columns may be
-predictive), there are $2^p$ subsets of columns to regress on. Checking all of
-these models against each other incurs a cost exponential in $p$ and becomes
-prohibitively expensive in a high-dimensional setting.
+predictors, yet model selection is most important precisely when we have a large
+number of predictors. That is, when building a model to predict $\bm{y}$ from a
+subset of the columns of $\bm{X} \in \mathbb{R}^{n,p}$ (since not all columns
+may be predictive), there are $2^p$ subsets of columns to regress on. Checking
+all of these models against each other incurs a cost exponential in $p$ and
+becomes prohibitively expensive in a high-dimensional setting.
 
 In class, we tackled this problem with forward-selection and backward-deletion,
 a greedy algorithm that adds and removes covariates until a local optimal is
