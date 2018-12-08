@@ -18,6 +18,7 @@
 \newcommand{\by}{\bm y}
 \newcommand{\bx}{\bm x}
 \newcommand{\bX}{\bm X}
+\newcommand{\bW}{\bm W}
 \newcommand{\stb}{\bm e}
 \newcommand{\bbeta}{\bm \beta}
 \newcommand{\one}{\mathbbm{1}}
@@ -51,18 +52,18 @@ where \eqref{eq:glm_lasso} reduces to \eqref{eq:linear_lasso} if the likelihood 
 \section{Model Selection with Lasso}
 
 Brute-force model selection scales poorly with respect to the number of
-predictors, yet model selection is most important precisely when we have a large
-number of predictors. That is, when building a model to predict $\bm{y}$ from a
-subset of the columns of $\bm{X} \in \mathbb{R}^{n,p}$ (since not all columns
-may be predictive), there are $2^p$ subsets of columns to regress on. Checking
-all of these models against each other incurs a cost exponential in $p$ and
-becomes prohibitively expensive in a high-dimensional setting.
+predictors. That is, when building a model to predict $\bm{y}$ from a subset of
+the columns of $\bX \in \mathbb{R}^{n,p}$ (since not all columns may be
+predictive), there are $2^p$ subsets of columns to regress on. Checking all of
+these models against each other incurs a cost exponential in $p$ and becomes
+prohibitively expensive in a high-dimensional setting.
 
 In class, we tackled this problem with forward-selection and backward-deletion,
 a greedy algorithm that adds and removes covariates until a local optimal is
 reached. \cite{park2007l1}'s use of the lasso for GLMs provides a competitive
-alternative that behaves less greedily. We describe their procedure in this
-section.
+alternative that behaves less greedily. The high-level idea is to note the
+non-zero coefficients for different penalizations $\lambda$ and constrain our
+search to these models. We describe their procedure in this section.
 
 In order to employ this method, we require a method to solve
 \eqref{eq:glm_lasso}. For now, we suppose that we have such a method and can use
@@ -79,6 +80,58 @@ at $\bm{0}$. The entire domain when $\bbeta = \bm{0}$ is uninteresting, so we
 initialize our algorithm at $\lambda_\text{max}$ which we define as the smallest
 $\lambda$ such that there is only one non-zero coefficient.
 
+Once we have initialize $\lambda$ in our algorithm to $\lambda_\text{max}$, we
+will repeat three steps that \cite{park2007l1} outline,
+
+\begin{enumerate}
+
+\item Determine the step length by which to decrease $\lambda$. The intent is to
+pick this such that the precisely one more coefficient becomes non-zero.
+Introducing notation, we let $\lambda_k$ be the $\lambda$ value we consider in
+the $k$th step, and we have to pick $\lambda_k - \lambda_{k+1}$.
+
+\item Using a linear approximation, predict the value of $\bbeta$ for the
+decremented $\lambda_{k+1}$.
+
+\item Initialize our solver of \eqref{eq:glm_lasso} with the linear estimate as
+$\bbeta^\text{init}$ and get the precise solution $\bbeta^*$ for the new
+$\lambda$.
+
+\end{enumerate}
+
+doing so until either we have brought $\lambda$ all the way to 0, or we
+determine that incremental variables are not improving the model. In order to
+perform the second step, a linear approximation prescribes that,
+
+\[ \bbeta_{k+1} \approx \bbeta_k + (\lambda_{k+1} - \lambda_k) \frac{\partial
+\bbeta}{\partial \lambda}.\]
+
+Denote by $\bX_A$ the matrix made up by the columns of $\bX$ whose corresponding
+$\bbeta$ coefficient is non-zero, i.e. in the active set. Furthermore, let $\bW$
+be the diagonal matrix with $i^\text{th}$ diagonal element given by,
+
+\[ \frac{1}{\var(y_i)} \left( \frac{\partial \mu}{\partial \eta} \right)^2\]
+
+which changes because the derivative is evaluated at a different location based
+on the value of $\lambda$, so we define $\bW_k$ as the value of $\bW$
+corresponding to $\lambda_k$. Then, we have that,
+
+\[ \bbeta_{k+1} \approx \bbeta_k - (\lambda_{k+1} - \lambda_k) (\bW_A^\top \bW_k
+\bX_A)^{-1} \sgn (\beta_k).\]
+
+Note that in the above equation, we pretend $\bbeta_k$ and $\bbeta_{k+1}$ only
+contain their non-zero components, and thus are not going to have all $p$
+dimensions. This makes our algebra simpler and we can do this because the linear
+approximation will not make a previously zero coefficient non-zero.
+
+Finally, we just need to determine our step size. One simple choice could be to
+use a constant step size. However, in different domains of $\lambda$, the same
+unit change in $\lambda$ could have dramatically different implications for the
+sparsity of the resulting $\bbeta$. If we were working with a lasso in linear
+regression, $\bW$ would not change, and we could pick the step size precisely to
+coincide with the point at which a coefficient of zero becomes non-zero.
+\cite{park2007l1} suggest doing precisely this, with the caveat that because
+$\bW$ does change, it will only be an approximation for the GLM case. 
 
 
 \section{Estimation}
