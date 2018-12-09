@@ -7,7 +7,6 @@
 \usepackage[thm]{macros}
 % \usepackage{natbib}
 % \usepackage{nopageno}
-\doublespacing
 \newgeometry{margin=1in}
 
 \pagestyle{fancy}
@@ -25,29 +24,50 @@
 \newcommand{\trans}{\intercal}
 \newcommand{\bg}{\bm g}
 \newcommand{\bgamma}{\bm \gamma}
+\newcommand{\linearlasso}{\hat \bbeta_{\text{lasso}}}
+\newcommand{\linearlassofitted}{\hat \by_{\text{lasso}}}
+\newcommand{\empave}{\mathbf{P}_n}
+\newcommand{\theoave}{\mathbf{P}}
+\newcommand{\bZ}{\bm Z}
+\newcommand{\err}{\mathcal{E}}
+
 \begin{document}
 
 \title{\textbf{Model Selection and Estimation in High-dimensional Generalized Linear Models}}
-\author{Francisco Rivera \and Jiafeng (Kevin) Chen}
+\author{\textbf{Francisco Rivera} \\ Harvard College \and \textbf{Jiafeng (Kevin) Chen} \\ Harvard College}
 \date{\today}
 
 \maketitle
-
+\doublespacing
 \section{Introduction}
+\label{sec:intro}
 The workhorse for high-dimensional regressions is the $\ell_1$ lasso penalty
 \citep{tibshirani1996regression}. The original lasso is developed for fitting
-(normal) linear models with the objective\footnote{We consider $\by$ an $n$-vector of response variables whose $i$th element is $\by_i$. We consider the covariate matrix $\bX$ ($n \times p$). In most settings, $\bX$ include an intercept column, $\bx_{0} = \bm 1$, that is not regularized.} \begin{equation}
-    \hat \bbeta_{\text{lasso}} = \argmin_{\bbeta}\, \norm{\by - \bX\bbeta}^2 + \lambda \norm{\bbeta}_1 - \lambda |\beta_0|, \, \lambda > 0.
+(normal) linear models with the objective\footnote{We consider $\by$ an
+$n$-vector of response variables whose $i$th element is $\by_i$. We consider the
+covariate matrix $\bX$ ($n \times p$). In most settings, $\bX$ include an
+intercept column, $\bx_{0} = \bm 1$, that is not regularized.} \begin{equation}
+    \hat \bbeta_{\text{lasso}} = \argmin_{\bbeta}\, \frac{1}{2n}\norm{\by -
+    \bX\bbeta}^2 + \lambda \norm{\bbeta}_1 - \lambda |\beta_0|, \, \lambda > 0.
     \label{eq:linear_lasso}
 \end{equation}
 The first paper about lasso in a GLM setting is \cite{park2007l1}: Consider a scalar GLM with likelihood \[
 L(y; \theta,\phi) = \exp\br{\frac{y\theta - b(\theta)}{a(\phi)} + c(y, \phi)},
 \]
-where $g(\E[y]) = \eta = \bx^\trans \bbeta$ for some scalar function $g$. Thus we may consider a direct extension of \eqref{eq:linear_lasso}: \begin{equation}
-    \hat \bbeta_{\text{GLM-lasso}} = \argmin_{\bbeta}\, \underbrace{-\frac{1}{n}\sum_{i=1}^n \bk{y_i \theta(\bbeta)_i - b\pr{\theta(\bbeta)_i}}}_{\ell_n(\bbeta)} + \lambda \norm{\bbeta}_1 - \lambda |\beta_0|,
+where $g(\E[y]) = \eta = \bx^\trans \bbeta$ for some scalar function $g$. Thus
+we may consider a direct extension of \eqref{eq:linear_lasso}: \begin{equation}
+    \hat \bbeta_{\text{GLM-lasso}} = \argmin_{\bbeta}\,
+    \underbrace{-\frac{1}{n}\sum_{i=1}^n \bk{y_i \theta(\bbeta)_i -
+    b\pr{\theta(\bbeta)_i}}}_{\ell_n(\bbeta)} + \lambda \norm{\bbeta}_1 -
+    \lambda |\beta_0|,
     \label{eq:glm_lasso}
 \end{equation}
-where \eqref{eq:glm_lasso} reduces to \eqref{eq:linear_lasso} if the likelihood is Gaussian and $g$ is the canonical link for the Gaussian model, which is the identity function. Note that the objective \eqref{eq:glm_lasso} is convex if we use the canonical link, since the exponential family log-likelihood is concave in $\theta$, and $\theta = \bx^\trans \bbeta$ is linear in $\bbeta$ for the canonical link.
+where \eqref{eq:glm_lasso} reduces to \eqref{eq:linear_lasso} if the likelihood
+is Gaussian and $g$ is the canonical link for the Gaussian model, which is the
+identity function. Note that the objective \eqref{eq:glm_lasso} is convex if we
+use the canonical link, since the exponential family log-likelihood is concave
+in $\theta$, and $\theta = \bx^\trans \bbeta$ is linear in $\bbeta$ for the
+canonical link.
 
 \section{Model Selection with Lasso}
 
@@ -56,12 +76,165 @@ predictors. That is, when building a model to predict $\bm{y}$ from a subset of
 the columns of $\bX \in \mathbb{R}^{n,p}$ (since not all columns may be
 predictive), there are $2^p$ subsets of columns to regress on. Checking all of
 these models against each other incurs a cost exponential in $p$ and becomes
-prohibitively expensive in a high-dimensional setting.
-
-In class, we tackled this problem with forward-selection and backward-deletion,
+prohibitively expensive in a high-dimensional setting. In class, we tackled this problem with forward-selection and backward-deletion,
 a greedy algorithm that adds and removes covariates until a local optimal is
-reached. \cite{park2007l1}'s use of the lasso for GLMs provides a competitive
-alternative that behaves less greedily. The high-level idea is to note the
+reached. 
+
+We introduced the lasso \eqref{eq:linear_lasso} in \Cref{sec:intro}. We first
+summarize the literature on lasso with OLS in
+this section. Assume that $\by = \bX \bbeta^\star + \bm \epsilon,\, \bm\epsilon
+\sim
+\Norm(0, \sigma^2 \bm I_n)$. In this case, where possibly $p > n$, the OLS
+estimate $\hat \bbeta
+\in \argmin_{\bbeta} \norm{\by - \bX \bbeta}^2$ may not be unique, but all such
+solutions have the same fitted values $\hat \by_{\text{OLS}} = \bX \hat\bbeta$.
+\begin{prop}
+    For some constant $C$, with $r = \text{rank}(\bX)$, then $
+    \E\bk{
+    \norm{X\bbeta^\star - \hat \by_{\text{OLS}}}_2^2 
+    } \le Cr\sigma^2.
+    $
+\label{thm:ols_bound}
+\end{prop} 
+\begin{proof}
+    Observe that \begin{align*}
+\norm{\by - \hat \by}^2  = \norm{\bX \bbeta^\star - \bX\bbeta} + 
+\norm{\bm \epsilon}_2^2 + 2 \bm \epsilon^\trans \pr{\bX \bbeta^\star -
+\bX\bbeta},
+\end{align*}
+for any $\bbeta$. Note that $\norm{\by - \hat \by_{\text{OLS}}}^2 \le \norm{\bm
+\epsilon}_2^2$. Thus \begin{align*}
+\norm{\by - \hat \by_{\text{OLS}}}^2  &= \norm{\bX \bbeta^\star - \hat \by_{\text{OLS}}} + 
+\norm{\bm \epsilon}_2^2 + 2 \bm \epsilon^\trans \pr{\bX \bbeta^\star - \hat \by_{\text{OLS}}} \le \norm{\bm
+\epsilon}_2^2\\
+\implies \norm{\bX \bbeta^\star - \hat \by_{\text{OLS}}} &\le
+2\bm\epsilon^\trans\underbrace{\pr{\hat \by_{\text{OLS}} - \bX \bbeta^\star}}_
+{\in C(\bX)}.
+\end{align*}
+Thus we can write $\hat \by_{\text{OLS}} - \bX \bbeta^\star = \bm \Phi \bm \nu$,
+for some $n\times \text{rank}(\bX) =: n\times r$ matrix $\bm \Phi$ of
+orthonormal basis of the columns of $\bX$. Thus \[
+\frac{\bm\epsilon^\trans{\pr{\hat \by_{\text{OLS}} - \bX \bbeta^\star}}}{
+\norm{\bX \bbeta^\star - \hat \by_{\text{OLS}}}} = \frac{\bm \epsilon^\trans
+\bm \Phi \bm \nu}{ \norm{\bm \Phi \bm \nu}_2} = \pr{\bm\Phi^\trans\bm
+\epsilon}^\trans \frac{\bm \nu}{ \norm{\bm\nu}} \le \sup_{\bm u : \norm{\bm u}
+\le 1}  \pr{\bm\Phi^\trans\bm
+\epsilon}^\trans u.
+\]
+Using the above inequalities, we show that \[
+\norm{\bX\bbeta^\star - \hat \by_{\text{OLS}}}^2 \le 4 \pr{\sup_{\bm u, 
+\norm{\bm u} \le 1}
+\underbrace{(\bm\Phi^\trans \bm\epsilon )^\trans}_{\Norm(0, \sigma^2 \bm I_r)}
+\bm u}^2 \implies \E\bk{\norm{\bX\bbeta^\star - \hat \by_{\text{OLS}}}^2} \le
+4\sigma^2 r,
+\]
+by properties of the normal distribution.\end{proof}
+
+Let $\linearlasso$ be the linear lasso estimate as in \eqref{eq:linear_lasso}.
+Let $\linearlassofitted$ be its fitted value. We can show that a bound similar
+to \Cref{thm:ols_bound} for the lasso, with $O_\P(\sqrt{\log (p/n)})$ replacing
+the $O
+(r/n)$ dependence (This is the so-called \emph{slow rate} for the lasso, see
+\cite{tibshirani2015sparsity}). Using the fact that $\linearlasso$ must achieve
+a better value than $\bbeta^\star$ for the objective in 
+\eqref{eq:linear_lasso}, and an expansion similar to the one in the proof of
+\Cref{thm:ols_bound}, we can show the inequality \begin{align*}
+\frac{1}{2n} \norm{\bX \bbeta^* - \linearlassofitted}_2^2 &\le \frac{1}
+{n}\underbrace{\bm
+\epsilon^\trans \pr{\linearlassofitted - \bX \bbeta^*}}_{\le \norm{\bX^T
+\bm\epsilon}_\infty \norm{\linearlasso - \bbeta^\star}_1 \text{(H\"older)}} +
+\lambda \norm{\bbeta^
+\star}_1 - \lambda \norm{\linearlasso}_1 \tag{\emph{Basic inequality} for the
+lasso}.
+\label{eq:basic} \\
+&\le \lambda \pr{\norm{\linearlasso - \bbeta^\star}_1 + \norm{\bbeta^
+\star}_1 - \norm{\linearlasso}_1 } \tag{On events $\Omega = \br{n^{-1}
+\norm{\bX^T
+\bm\epsilon}_\infty \le \lambda }$} \\
+&\le 2\lambda \norm{\bbeta^\star}_1.
+\end{align*}
+We can show that $
+\P(\Omega) \ge 1 - p^{-C/2 + 1}
+$ if $\lambda = C\sigma \sqrt{\log (p) / n}$ for $C > 2$, assuming standardized
+columns in $\bX$ \citep[see][]{tibshirani2015sparsity}. This leads to the
+following 
+
+\begin{prop}[Slow rate for the lasso]
+    Let $\lambda =  C\sigma \sqrt{\log (p) / n}$ for $C > 2$, then with
+    probability at least $1 - p^{-C/2+1}$, \[
+    \frac{1}{n}\norm{\bX \bbeta^* - \linearlassofitted}^2 \le 2 
+    \norm{\bbeta^\star}_1 \sigma \sqrt{C \frac{\log p}{n}}.
+    \]
+\end{prop}
+How far is the lasso from the optimum? Suppose $k < p$ of $\bbeta^\star$ are
+nonzero, then if we knew these active predictors (i.e. have an \emph{oracle}),
+the
+{oracle} OLS estimator achieves an error of
+$k\sigma^2/n$. One can show that the error cannot get better than $\log(p)
+k\sigma^2/n$ without the oracle, and the best-subset estimator---replacing
+$\ell_1$-norm in \eqref{eq:linear_lasso} with the nonconvex $\ell_0$-norm, $\norm{\bbeta}_0 =
+\sum_i
+\one\pr{\bbeta_i \neq 0}$---achieves this optimum. Under certain conditions, we
+can show that the lasso achieves a \emph{fast rate} of $\log(p) k\sigma^2/n$,
+which is the optimal rate. \cite{van2009conditions} provide a review of relevant
+conditions for achieving the fast rate. These conditions mostly forbid high
+correlations among the active columns in $\bX$.  Moreover, with even more
+restrictions, one could show that there exists a
+$\lambda$ in
+\eqref{eq:linear_lasso} for which the corresponding $\linearlasso$ achieves
+perfect \emph{support recovery} with high probability: \[
+\sgn(\linearlasso) = \sgn(\bbeta^\star).
+\]
+We defer the more technical discussions to \cite{buhlmann2011statistics}. 
+
+Chapter 6 of \cite{buhlmann2011statistics} extends much of the linear results to
+convex loss functions, covering scalar-valued GLMs with canonical links. Let
+$\rho_{f_{\bbeta}}$ be a loss function with respect to prediction function
+$f_\beta$ that maps data $\bm Z_i = (\bx_i, \by_i)$ to $\R$. Denote $\empave
+\rho = n^{-1}\sum_i\rho(\bZ_i)$ the empirical risk, $\theoave \rho = n^{-1} \E
+\bk{\sum_i \rho
+(\bZ_i)}$ the theoretical risk, and $\err(f) = \theoave\pr{\rho_f - \rho_{f_0}}$
+the excess risk,
+where $f_0$ is a
+minimizer of $\theoave \rho$ in some class $\mathbf{F} \supset \mathcal F = 
+\{f_{\bbeta}: \bbeta \in \R^p\}$. Let $f^0_{\text{GLM}} = \argmin_{\mathcal F}
+\theoave \rho$ be the GLM approximation to $f_0$, which is assumed to have low
+excess risk. In the GLM context, let $\bbeta^\star$ be the parameters such that
+$f_{\bbeta^\star} = f_{\text{GLM}}^0$. 
+The lasso in this context produces \[
+\hat \bbeta = \argmin_{\bbeta} \br{\empave \rho_{f_{\bbeta}} + \lambda 
+\norm{\bbeta}_1 }.
+\]
+Define the \emph{empirical process} to be the gap between theoretical and
+empirical risks for a $\bbeta$: $\br{v_n (\bbeta) = (\empave - \theoave)
+\rho_{f_{\bbeta}}: \bbeta \in \R^p}$. The \eqref{eq:basic} can be generalized to
+\[
+\err\pr{f_{\hat \bbeta}} + \lambda \norm{\hat \bbeta}_1 \le -\pr{v_n (\hat
+\bbeta) - v_n (\bbeta^\star)} + \lambda \norm{\bbeta^\star}_1 + \err\pr{f_
+{\bbeta^\star}}
+\]
+Using the above, we show that, with probability that converges to 1 as $\lambda
+\to 0$, \[
+\err(f_{\hat \bbeta}) + \lambda \lVert\hat \bbeta \rVert_1 \le 2 \bk{
+    \err(f_{\bbeta^\star}) + 2\lambda \norm{\bbeta^\star}_1
+}  
+\]
+as $\lambda \to 0$, this shows a sort of \emph{consistency} result. For
+instance, if the true $f$ is a GLM, then $\err(f_{\hat \bbeta}) \to 0 = 2
+\err(f_{\bbeta^\star})$.  We can also show \cite[][Chapter 6.7]
+{buhlmann2011statistics} an \emph{oracle inequality} similar to that in the fast
+rate of the lasso, where under some restrictive regularity conditions, $\err(f_
+{\hat \bbeta})$ shrinks at the oracle rate of $O\pr{k \log p / n}$. 
+
+\section{Estimation}
+\label{sec:estimation}
+
+\subsection{Regularization path methods}
+\cite{efron2004least} gives an efficient estimation procedure for the linear
+lasso \eqref{eq:linear_lasso} called the Least Angle Regression (LAR), which
+relies on the fact that the \emph{regularization path}---$\hat \bbeta_i$ as a
+function of $\lambda$---is piecewise linear in \eqref{eq:linear_lasso}. Such a
+structure is often unavailable in applications like \eqref{eq:glm_lasso}. \cite{park2007l1} mimicks the LAR procedure in GLM estimation. The high-level idea is to note the
 non-zero coefficients for different penalizations $\lambda$ and constrain our
 search to these models. We describe their procedure in this section.
 
@@ -133,15 +306,8 @@ coincide with the point at which a coefficient of zero becomes non-zero.
 \cite{park2007l1} suggest doing precisely this, with the caveat that because
 $\bW$ does change, it will only be an approximation for the GLM case. 
 
-
-\section{Estimation}
-\label{sec:estimation}
-
-\cite{efron2004least} gives an efficient estimation procedure for the linear
-lasso \eqref{eq:linear_lasso} called the Least Angle Regression (LAR), which
-relies on the fact that the \emph{regularization path}---$\hat \bbeta_i$ as a
-function of $\lambda$---is piecewise linear in \eqref{eq:linear_lasso}. Such a
-structure is often unavailable in applications like \eqref{eq:glm_lasso}. The
+\subsection{Coordinate descent methods}
+Unfortunately, \cite{park2007l1}'s method often scales poorly with the size of the problem. The
 most popular method---proposed by \cite{friedman2010regularization} and
 implemented in \textsf{R}'s \textsf{glmnet} package---is \emph{cyclical
 coordinate descent} with iteratively reweighted least squares. The idea is to
@@ -240,8 +406,9 @@ $\epsilon^{-2}$ dependence, as opposed to $p$ and $\epsilon^{-1}$, in order to
 achieve the benefit of a $n$-free runtime.
 
 
+
 \newpage
-\nocite{*}
+% \nocite{*}
 \bibliographystyle{jpe}
 \bibliography{sources}
 
