@@ -8,7 +8,7 @@
 % \usepackage{natbib}
 % \usepackage{nopageno}
 \newgeometry{margin=1in}
-
+\usepackage{lipsum}
 \pagestyle{fancy}
 \lhead{}
 \chead{\textsc{High-dimensional GLMs}}
@@ -33,7 +33,8 @@
 
 \begin{document}
 
-\title{\textbf{Model Selection and Estimation in High-dimensional Generalized Linear Models}}
+\title{\textbf{Model Selection and Estimation in High-dimensional
+Generalized Linear Models}}
 \author{\textbf{Francisco Rivera} \\ Harvard College \and \textbf{Jiafeng (Kevin) Chen} \\ Harvard College}
 \date{\today}
 
@@ -41,8 +42,22 @@
 \doublespacing
 \section{Introduction}
 \label{sec:intro}
+High-dimensional statistics---settings in which the dimensionality of the
+predictors, $p$, is high, or even higher than that of the data $n$---has become
+increasingly prevalent. Typically in such settings, we assume that the
+underlying signal is \emph{sparse}---only $k$ of the $p$ predictors, $k \ll p$,
+are actually predicative.\footnote{``Use a procedure that does well in sparse
+problems, since no procedure does well in dense problems'' 
+\citep{hastie2015statistical}.} Traditional methods, like ordinary least squares
+or maximum likelihood, typically do not work well in high-dimensional settings
+as we cannot impose sparsity without model selection; moreover, model selection
+is an
+optimization problem of the prohibitive dimension $2^p$, and greedy methods such
+as forward/backward stepwise selection are typically ad hoc. 
+
 The workhorse for high-dimensional regressions is the $\ell_1$ lasso penalty
-\citep{tibshirani1996regression}. The original lasso is developed for fitting
+\citep{tibshirani1996regression}. In this report, we focus on properties of
+the lasso. The original lasso is developed for fitting
 (normal) linear models with the objective\footnote{We consider $\by$ an
 $n$-vector of response variables whose $i$th element is $\by_i$. We consider the
 covariate matrix $\bX$ ($n \times p$). In most settings, $\bX$ include an
@@ -69,7 +84,16 @@ use the canonical link, since the exponential family log-likelihood is concave
 in $\theta$, and $\theta = \bx^\trans \bbeta$ is linear in $\bbeta$ for the
 canonical link.
 
+This report is organized as follows. \Cref{sec:model} discusses theoretical
+properties with respect to the in-sample error $\E\pr{\E[y \mid \bx] - \hat f
+(\bx)}^2$ and selection error for the lasso with linear and generalized linear
+models. \Cref{sec:estimation} discusses algorithmic properties of lasso
+estimation, primarily in a generalized linear model context, as the linear lasso
+estimation problem is well understood \citep{efron2004least}. \Cref{sec:num}
+illustrates the lasso with numerical simulations. \Cref{sec:conc} concludes.
+
 \section{Model Selection with Lasso}
+\label{sec:model}
 
 Brute-force model selection scales poorly with respect to the number of
 predictors. That is, when building a model to predict $\bm{y}$ from a subset of
@@ -178,7 +202,13 @@ $\ell_1$-norm in \eqref{eq:linear_lasso} with the nonconvex $\ell_0$-norm, $\nor
 can show that the lasso achieves a \emph{fast rate} of $\log(p) k\sigma^2/n$,
 which is the optimal rate. \cite{van2009conditions} provide a review of relevant
 conditions for achieving the fast rate. These conditions mostly forbid high
-correlations among the active columns in $\bX$.  Moreover, with even more
+correlations among the active columns in $\bX$.\footnote{Roughly speaking,
+such assumptions allow us to bound the difference in $\bbeta$ in terms
+of the difference in fitted values. Since the difference in fitted values are
+naturally bounded by differences in $\bbeta$, this allows us to recover an
+independent bound on the difference of fitted values (in-sample error). See
+\cite{tibshirani2015sparsity} for details.}
+Moreover, with even more
 restrictions, one could show that there exists a
 $\lambda$ in
 \eqref{eq:linear_lasso} for which the corresponding $\linearlasso$ achieves
@@ -406,6 +436,7 @@ $\epsilon^{-2}$ dependence, as opposed to $p$ and $\epsilon^{-1}$, in order to
 achieve the benefit of a $n$-free runtime.
 
 \section{Numerical Simulation}
+\label{sec:num}
 
 Thus far we have covered the theoretical properties of the lasso in a linear
 setting and the algorithmic implications of extending the lasso to GLMs. Here,
@@ -413,8 +444,9 @@ we explore the performance of the lasso in GLMs through numerical simulation. In
 particular, we focus on a well-specified logistic regression in which we control
 the generative model and set many of the true coefficients to zero.
 
-We start by creating a correlated matrix $X$ with a randomly generated
-correlation structure. Then, we generate a binary vector $y$ whose elements are
+We start by creating a correlated matrix $\bX$ with a randomly generated
+correlation structure. Then, we generate a binary vector $\by$ whose elements
+are
 Bernoulli random variables with probabilities determined through a logistic link
 function with most of the coefficients being zero. Finally, we fit a penalized
 logistic regression and calculate some summary statistics on its performance.
@@ -470,6 +502,16 @@ lasso for model selection: the coefficients of the non-predictive terms get
 brought down to zero distinctly before that of the predictive term (the first 10
 terms are predictive, and are labelled on the chart).
 
+\section{Discussion and Conclusion}
+\label{sec:conc}
+In this report, we introduce the problem of high-dimensional regression in a
+linear and generalized linear models context. We show that lasso has good
+in-sample error and selection properties for the linear regression case, and we
+state generalizations ofthe linear regression case in \Cref{sec:model}. We
+introduced a few algorithms to compute the lasso in \Cref{sec:estimation},
+including extensions to stochastic gradient and coordinate descent methods. We
+ add numerical experiments to explore the behavior of the lasso in a sparse GLM
+ setting in \Cref{sec:num}.  %\lipsum% [3]
 \newpage
 % \nocite{*}
 \bibliographystyle{jpe}
