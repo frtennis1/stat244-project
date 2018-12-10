@@ -7,7 +7,6 @@
 *out
 *gitignore
 *fls
-*.pdf
 *fdb_latexmk
 *fls
 lit/*
