@@ -405,6 +405,104 @@ The runtime bound for the stochastic mirror descent algorithm in
 $\epsilon^{-2}$ dependence, as opposed to $p$ and $\epsilon^{-1}$, in order to
 achieve the benefit of a $n$-free runtime.
 
+\section{Numerical Simulation}
+
+Thus far we have covered the theoretical properties of the lasso in a linear
+setting and the algorithmic implications of extending the lasso to GLMs. Here,
+we explore the performance of the lasso in GLMs through numerical simulation. In
+particular, we focus on a well-specified logistic regression in which we control
+the generative model and set many of the true coefficients to zero. We start by
+creating a correlated matrix $X$ with a randomly generated correlation
+structure,
+
+\begin{lstlisting}
+n, p = int(1e5), 100
+
+A = np.random.uniform(-1, 1, size=(p,p))
+cov = A.T @ A
+
+X = np.random.multivariate_normal(np.zeros(p), cov, n)
+\end{lstlisting}
+
+Then, we generate a binary vector $y$ whose elements are Bernoulli random
+variables with probabilities determined through a logistic link function with
+most of the coefficients being zero,
+
+\begin{lstlisting}
+num_significant = 10
+beta = np.zeros(p)
+beta[:num_significant] = np.random.normal(size=num_significant)
+
+y = np.random.binomial(1, expit(X @ beta)).astype(float)
+\end{lstlisting}
+
+Finally, we fit a penalized logistic regression and calculate some summary
+statistics on its performance,
+
+\begin{lstlisting}
+# C = 1/lambda
+logistic = LogisticRegression(penalty='l1', C=.1)
+
+logistic.fit(X, y)
+fit_coeffs = logistic.coef_.flatten()
+
+# rmse of expectations of y_i
+mean_squared_error(expit(X @ beta), expit(X @ fit_coeffs))
+
+# mis-classified coefficients (zero or not-zero)
+len(set(range(num_significant)) ^ 
+    set([i for i, val in enumerate(fit_coeffs) if abs(val) > 1e-3]))
+\end{lstlisting}
+
+We can repeat this process for different values of $p$ keeping the number of
+significant coefficients constant. This captures the insertion of noisy
+parameters into our problem. Then, we can plot the summary statistics against
+the number of predictors both for our lasso solution as well as a standard
+un-penalized logistic regression. \cref{fig:lasso-pred-err} shows us that while
+the insertion of covariates with no predictive ability hurts our predictive
+power in both the lasso and un-penalized cases, the lasso scales better as
+evidenced by a smaller slope. Of course, the trade-off is that the un-penalized
+solution does better in cases where more of the parameters are predictive ($p$
+is smaller). In our particular experiment, the break-even point is at around 50
+covariates for our chosen value of $\lambda$.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=.8\textwidth]{figs/lasso-pred-error}
+\caption{Lasso prediction error}
+\label{fig:lasso-pred-err}
+\end{figure}
+
+We can also understand the implications of the lasso versus the un-penalized GLM
+for model selection through \cref{fig:lasso-symm-diff}. This shows us that the
+un-penalized GLM ascribes non-zero (which we here define as bigger in absolute
+value than $10^{-3}$) coefficients to almost all the covariates, even when the
+true coefficient for most of them is 0. The lasso with our chosen value of
+$\lambda$ brings this value down to just about half. More sparsity can be
+achieved by using a bigger $\lambda$, though this can also affect the predictive
+loss.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=.8\textwidth]{figs/lasso-symm-diff}
+\caption{Lasso sparsity identification}
+\label{fig:lasso-symm-diff}
+\end{figure}
+
+Finally, we can also vary the adaptive parameter $\lambda$ and explore the
+behavior of the coefficients as we do so. \cref{fig:lasso-path} uses R's
+\textsf{glmnet} package to generate the plot of log $\lambda$ versus the
+coefficients in the same model as previously. This illustrates the power of the
+lasso for model selection: the coefficients of the non-predictive terms get
+brought down to zero distinctly before that of the predictive term (the first 10
+terms are predictive, and are labelled on the chart).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=.8\textwidth]{figs/lasso-path}
+\caption{Lasso coefficient path}
+\label{fig:lasso-path}
+\end{figure}
 
 
 \newpage
