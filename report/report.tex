@@ -43,17 +43,16 @@ Generalized Linear Models}}
 \section{Introduction}
 \label{sec:intro}
 High-dimensional statistics---settings in which the dimensionality of the
-predictors, $p$, is high, or even higher than that of the data $n$---has become
-increasingly prevalent. Typically in such settings, we assume that the
-underlying signal is \emph{sparse}---only $k$ of the $p$ predictors, $k \ll p$,
-are actually predicative.\footnote{``Use a procedure that does well in sparse
-problems, since no procedure does well in dense problems'' 
+predictors, $p$, is high, or potentially even higher than that of the data,
+$n$---has become increasingly prevalent. Typically in such settings, we assume
+that the underlying signal is \emph{sparse}---only $k$ of the $p$ predictors, $k
+\ll p$, are actually predictive.\footnote{``Use a procedure that does well in
+sparse problems, since no procedure does well in dense problems''
 \citep{hastie2015statistical}.} Traditional methods, like ordinary least squares
 or maximum likelihood, typically do not work well in high-dimensional settings
 as we cannot impose sparsity without model selection; moreover, model selection
-is an
-optimization problem of the prohibitive dimension $2^p$, and greedy methods such
-as forward/backward stepwise selection are typically ad hoc. 
+is an optimization problem of the prohibitive dimension $2^p$, and greedy
+methods such as forward/backward stepwise selection are typically ad hoc.
 
 The workhorse for high-dimensional regressions is the $\ell_1$ lasso penalty
 \citep{tibshirani1996regression}. In this report, we focus on properties of
@@ -260,11 +259,11 @@ rate of the lasso, where under some restrictive regularity conditions, $\err(f_
 \label{sec:estimation}
 
 \subsection{Regularization path methods}
-\cite{efron2004least} gives an efficient estimation procedure for the linear
+\cite{efron2004least} give an efficient estimation procedure for the linear
 lasso \eqref{eq:linear_lasso} called the Least Angle Regression (LAR), which
 relies on the fact that the \emph{regularization path}---$\hat \bbeta_i$ as a
 function of $\lambda$---is piecewise linear in \eqref{eq:linear_lasso}. Such a
-structure is often unavailable in applications like \eqref{eq:glm_lasso}. \cite{park2007l1} mimicks the LAR procedure in GLM estimation. The high-level idea is to note the
+structure is often unavailable in applications like \eqref{eq:glm_lasso}. \cite{park2007l1} mimick the LAR procedure in GLM estimation. The high-level idea is to note the
 non-zero coefficients for different penalizations $\lambda$ and constrain our
 search to these models. We describe their procedure in this section.
 
@@ -272,7 +271,7 @@ In order to employ this method, we require a method to solve
 \eqref{eq:glm_lasso}. For now, we suppose that we have such a method and can use
 it as a black box. It is sufficient for us to know that this black box takes in
 an initial $\bbeta^\text{init}$ and employs a descent-based method to converge
-toward the optimal $\bbeta^*$. \cref{sec:estimation} follows-up by describing
+toward the optimal $\bbeta^*$. \Cref{sub:coord} follows-up by describing
 the inner workings of different approaches.
 
 The lasso penalty induces a sparsity in our optimal $\bbeta$. This sparsity
@@ -337,10 +336,17 @@ coincide with the point at which a coefficient of zero becomes non-zero.
 $\bW$ does change, it will only be an approximation for the GLM case. 
 
 \subsection{Coordinate descent methods}
-Unfortunately, \cite{park2007l1}'s method often scales poorly with the size of the problem. The
+\label{sub:coord}
+The
 most popular method---proposed by \cite{friedman2010regularization} and
-implemented in \textsf{R}'s \textsf{glmnet} package---is \emph{cyclical
-coordinate descent} with iteratively reweighted least squares. The idea is to
+implemented in \textsf{R}'s \textsf{glmnet} package---for solving \eqref{eq:glm_lasso} is 
+\emph{cyclical
+coordinate descent} with iteratively reweighted least squares.\footnote{Here we
+also obtain the regularization path by iterating over fixed values of $\lambda$ 
+(\Cref{alg:ccd}); of course, we could choose $\lambda$ via the method in 
+\cite{park2007l1}. According to \cite{friedman2010regularization}, 
+\cite{park2007l1}'s method does not scale well with size of the problem.}
+The idea is to
 approximate $\ell_n(\bbeta)$ in \eqref{eq:glm_lasso} with a second-order Taylor
 expansion, either globally for all parameters $\bbeta$ (for scalar-valued GLMs)
 or locally with a single parameter $\bbeta_j$ (for vector-valued GLMs, such as
@@ -410,12 +416,13 @@ simulataneously may over or undercompensate for the gradient direction.
 \cite{bradley2011parallel} quantifies the interference due to correlated
 features and shows that efficiency increases linearly in the number of parallel
 processes $\mathsf{P}$ so long as $\mathsf{P} \le \frac{p}{\rho}$ where $\rho$
-is the largest modulus of the eigenvalues of $X^\trans X$.
+is the largest modulus of the eigenvalues of $\bX^\trans \bX$.
 
 Coordinate descent methods described above can also become expensive if $n$ is
 large. The standard machine learning and optimization answer to this problem is
 to use \emph{stochastic gradient descent}, replacing $\nabla_{\bbeta}
-\ell_n(\bbeta)$ with an unbiased estimate $\bm g_i = \nabla_{\bbeta} \log L(y_i;
+\ell_n(\bbeta)$ with an unbiased estimate $\bm g_i = \nabla_{\bbeta} \log L
+(\by_i;
 \bbeta)$, which is the gradient evaluated on a single observation.\footnote{We
 can replace this with \emph{batched gradient descent} as well, where the
 gradient estimate is averaging over a batch of observations.}
@@ -438,7 +445,8 @@ achieve the benefit of a $n$-free runtime.
 \section{Numerical Simulation}
 \label{sec:num}
 
-Thus far we have covered the theoretical properties of the lasso in a linear
+Thus far we have covered the theoretical properties of the lasso in a linear and
+generalized linear
 setting and the algorithmic implications of extending the lasso to GLMs. Here,
 we explore the performance of the lasso in GLMs through numerical simulation. In
 particular, we focus on a well-specified logistic regression in which we control
@@ -572,9 +580,6 @@ beta[1:num.significant] = rnorm(num.significant)
 eta <- as.vector(X %*% beta)
 
 y <- as.numeric(runif(n) < logistic(eta))
-
-# put together into a dataframe
-# df <- as.data.frame(cbind(X, y))
 
 l1.model <- glmnet(X, y, family = "binomial", alpha = 1)
 
