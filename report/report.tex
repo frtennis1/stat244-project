@@ -419,6 +419,13 @@ Bernoulli random variables with probabilities determined through a logistic link
 function with most of the coefficients being zero. Finally, we fit a penalized
 logistic regression and calculate some summary statistics on its performance.
 
+\begin{figure}[tbh]
+\centering
+\includegraphics[width=.8\textwidth]{figs/lasso-pred-error}
+\caption{Lasso prediction error}
+\label{fig:lasso-pred-err}
+\end{figure}
+
 We can repeat this process for different values of $p$ keeping the number of
 significant coefficients constant. This captures the insertion of noisy
 parameters into our problem. Then, we can plot the summary statistics against
@@ -430,13 +437,6 @@ evidenced by a smaller slope. Of course, the trade-off is that the un-penalized
 solution does better in cases where more of the parameters are predictive ($p$
 is smaller). In our particular experiment, the break-even point is at around 50
 covariates for our chosen value of $\lambda$.
-
-\begin{figure}[tbh]
-\centering
-\includegraphics[width=.8\textwidth]{figs/lasso-pred-error}
-\caption{Lasso prediction error}
-\label{fig:lasso-pred-err}
-\end{figure}
 
 \begin{figure}[tbh]
 \centering
@@ -474,6 +474,72 @@ terms are predictive, and are labelled on the chart).
 % \nocite{*}
 \bibliographystyle{jpe}
 \bibliography{sources}
+
+\newpage
+
+\section*{Appendix A: Code}
+
+\begin{lstlisting}
+import scipy
+
+from scipy.special import expit
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import mean_squared_error, 
+
+n, p = int(1e5), 100
+num_significant = 10
+
+A = np.random.uniform(-1, 1, size=(p,p))
+cov = A.T @ A
+X = np.random.multivariate_normal(np.zeros(p), cov, n)
+beta = np.zeros(p)
+beta[:num_significant] = np.random.normal(size=num_significant)
+y = np.random.binomial(1, expit(X @ beta)).astype(float)
+
+logistic = LogisticRegression(penalty='l1', C=.1)
+
+logistic.fit(X, y)
+fit_coeffs = logistic.coef_.flatten()
+
+mean_squared_error(expit(X @ beta), expit(X @ fit_coeffs))
+
+len(set(range(num_significant)) ^ 
+    set([i for i, val in enumerate(fit_coeffs) if abs(val) > 1e-3]))
+\end{lstlisting}
+
+\begin{lstlisting}
+library(MASS)
+library(psych)
+library(glmnet)
+
+# generate hyperparameters
+
+n <- 1e4
+p <- 100
+num.significant <- 10
+
+A <- matrix(runif(p^2)*2-1, ncol=p) 
+sigma <- t(A) %*% A
+
+# generate random data
+
+X <- mvrnorm(n = n, Sigma = sigma, mu = rep(0, p))
+beta <- rep(0, p)
+beta[1:num.significant] = rnorm(num.significant)
+eta <- as.vector(X %*% beta)
+
+y <- as.numeric(runif(n) < logistic(eta))
+
+# put together into a dataframe
+# df <- as.data.frame(cbind(X, y))
+
+l1.model <- glmnet(X, y, family = "binomial", alpha = 1)
+
+plot.glmnet(l1.model, xvar = "lambda", label=TRUE)
+title(main = "Path of fit coefficients by lambda", line = 2.5)
+par(mar=c(4.5, 4.5, 5, 4))
+\end{lstlisting}
 
 \end{document}
 
